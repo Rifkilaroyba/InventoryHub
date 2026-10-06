@@ -1,0 +1,54 @@
+@page "/"
+@using InventoryHub.Web.Models
+@using InventoryHub.Web.Services
+@inject ProductService Products
+
+<h1>InventoryHub</h1>
+
+<button @onclick="() => LoadAsync(true)" disabled="@loading">Muat Ulang</button>
+
+@if (loading)
+{
+    <p>Memuat data...</p>
+}
+else if (error is not null)
+{
+    <p style="color:red">Gagal memuat data: @error</p>
+}
+else
+{
+    <table border="1" cellpadding="6">
+        <thead>
+            <tr><th>ID</th><th>Nama</th><th>Harga</th><th>Stok</th><th>Kategori</th></tr>
+        </thead>
+        <tbody>
+        @foreach (var p in items)
+        {
+            <tr>
+                <td>@p.Id</td>
+                <td>@p.Name</td>
+                <td>@p.Price.ToString("C2")</td>
+                <td>@p.Stock</td>
+                <td>@p.Category.Name</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<Product> items = [];
+    private bool loading = true;
+    private string? error;
+
+    // Dipanggil sekali saat halaman dibuka (tidak ada panggilan berulang saat render ulang).
+    protected override Task OnInitializedAsync() => LoadAsync(false);
+
+    private async Task LoadAsync(bool force)
+    {
+        loading = true; error = null;
+        try { items = await Products.GetProductsAsync(force); }
+        catch (Exception ex) { error = ex.Message; }
+        finally { loading = false; }
+    }
+}
